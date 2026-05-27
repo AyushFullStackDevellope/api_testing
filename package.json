@@ -21,8 +21,8 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
     "jest": "^29.7.0",
+    "nodemon": "^3.1.14",
     "supertest": "^6.3.4"
   }
 }
