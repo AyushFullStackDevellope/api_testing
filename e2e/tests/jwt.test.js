@@ -13,7 +13,7 @@
  */
 
 const jwt = require('jsonwebtoken');
-const { generatePreContextToken, generateAccessToken, verifyToken } = require('../src/utils/jwt');
+const { generatePreContextToken, generateAccessToken, verifyToken } = require('../../src/utils/jwt');
 
 // -----------------------------------------------------------------------------
 // Helper to mock Express req/res/next

@@ -1,5 +1,9 @@
 const { loginRequest, loginWithToken } = require("../helpers/api.helpers");
 const { env } = require("../constants/env");
+const {
+  validateJSONHeaders,
+  validateErrorResponse,
+} = require("../helpers/validators");
 
 describe("POST /auth/login", () => {
   // ─── Valid Login ───────────────────────────────────────────────
@@ -10,7 +14,8 @@ describe("POST /auth/login", () => {
       password: env.adminPassword(),
     });
 
-    expect(res.status).toBe(200);
+    validateJSONHeaders(res, 200);
+    expect(res.body).toHaveProperty("success", true);
   });
 
   // ─── Wrong / Invalid Credentials ──────────────────────────────
@@ -21,7 +26,7 @@ describe("POST /auth/login", () => {
       password: "wrongpassword123",
     });
 
-    expect(res.status).toBe(401);
+    validateErrorResponse(res, 401);
   });
 
   test("verify login with invalid email", async () => {
@@ -30,7 +35,7 @@ describe("POST /auth/login", () => {
       password: env.adminPassword(),
     });
 
-    expect(res.status).toBe(400);
+    validateErrorResponse(res, 400);
   });
 
   // ─── Empty Fields ──────────────────────────────────────────────
@@ -41,7 +46,7 @@ describe("POST /auth/login", () => {
       password: env.adminPassword(),
     });
 
-    expect(res.status).toBe(400);
+    validateErrorResponse(res, 400);
   });
 
   test("verify login with empty password field", async () => {
@@ -50,13 +55,13 @@ describe("POST /auth/login", () => {
       password: "",
     });
 
-    expect(res.status).toBe(400);
+    validateErrorResponse(res, 400);
   });
 
   test("verify login with empty request body", async () => {
     const res = await loginRequest({});
 
-    expect(res.status).toBe(400);
+    validateErrorResponse(res, 400);
   });
 
   // ─── Missing Fields ────────────────────────────────────────────
@@ -66,7 +71,7 @@ describe("POST /auth/login", () => {
       email: env.adminEmail(),
     });
 
-    expect(res.status).toBe(400);
+    validateErrorResponse(res, 400);
   });
 
   test("verify login with missing email field", async () => {
@@ -74,7 +79,7 @@ describe("POST /auth/login", () => {
       password: env.adminPassword(),
     });
 
-    expect(res.status).toBe(400);
+    validateErrorResponse(res, 400);
   });
 
   // ─── Null Values ───────────────────────────────────────────────
@@ -85,7 +90,7 @@ describe("POST /auth/login", () => {
       password: null,
     });
 
-    expect(res.status).toBe(400);
+    validateErrorResponse(res, 400);
   });
 
   // ─── Token ─────────────────────────────────────────────────────
@@ -96,7 +101,7 @@ describe("POST /auth/login", () => {
       password: env.adminPassword(),
     });
 
-    expect(res.status).toBe(200);
+    validateJSONHeaders(res, 200);
     expect(res.body).toHaveProperty("pre_context_token");
     expect(typeof res.body.pre_context_token).toBe("string");
     expect(res.body.pre_context_token.length).toBeGreaterThan(0);
@@ -105,13 +110,13 @@ describe("POST /auth/login", () => {
   test("verify API with invalid token", async () => {
     const res = await loginWithToken("invalid.token.here");
 
-    expect(res.status).toBe(401);
+    validateErrorResponse(res, 401);
   });
 
   test("verify API without authorization token", async () => {
     const res = await loginWithToken("");
 
-    expect(res.status).toBe(401);
+    validateErrorResponse(res, 401);
   });
 
   // ─── Response Shape ────────────────────────────────────────────
@@ -122,7 +127,7 @@ describe("POST /auth/login", () => {
       password: env.adminPassword(),
     });
 
-    expect(res.status).toBe(200);
+    validateJSONHeaders(res, 200);
     expect(res.body).toHaveProperty("user");
     expect(res.body.user).toHaveProperty("email");
   });
@@ -133,8 +138,7 @@ describe("POST /auth/login", () => {
       password: env.adminPassword(),
     });
 
-    expect(res.status).toBe(200);
-    expect(res.headers["content-type"]).toMatch(/application\/json/);
+    validateJSONHeaders(res, 200);
     expect(typeof res.body).toBe("object");
   });
 
@@ -144,7 +148,7 @@ describe("POST /auth/login", () => {
       password: env.adminPassword(),
     });
 
-    expect(res.status).toBe(200);
+    validateJSONHeaders(res, 200);
     expect(res.body).toHaveProperty("message");
     expect(typeof res.body.message).toBe("string");
   });
@@ -154,10 +158,10 @@ describe("POST /auth/login", () => {
   test("verify login with inactive user account", async () => {
     const res = await loginRequest({
       email: process.env.TEST_INACTIVE_EMAIL || "inactive@test.com",
-      password: process.env.TEST_INACTIVE_PASSWORD || "somepassword",
+      password: process.env.TEST_INACTIVE_PASSWORD || "inactive123",
     });
 
-    expect(res.status).toBe(403);
+    validateErrorResponse(res, 403);
   });
 
   test("verify login with SQL injection input", async () => {
@@ -166,6 +170,6 @@ describe("POST /auth/login", () => {
       password: "' OR '1'='1",
     });
 
-    expect(res.status).toBe(400);
+    validateErrorResponse(res, 400);
   });
 });
